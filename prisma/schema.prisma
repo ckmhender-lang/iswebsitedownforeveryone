@@ -1,0 +1,163 @@
+// Prisma schema for IsWebsiteDown
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum MonitorStatus {
+  ACTIVE
+  PAUSED
+  DELETED
+}
+
+enum CheckStatus {
+  UP
+  DOWN
+  DEGRADED
+  TIMEOUT
+}
+
+enum IncidentStatus {
+  OPEN
+  RESOLVED
+}
+
+enum AlertChannel {
+  EMAIL
+  WEBHOOK
+  SLACK
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  monitors      Monitor[]
+  alerts        Alert[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Monitor {
+  id           String        @id @default(cuid())
+  userId       String
+  name         String
+  url          String
+  status       MonitorStatus @default(ACTIVE)
+  interval     Int           @default(5)
+  timeout      Int           @default(30)
+  lastCheckAt  DateTime?
+  lastStatus   CheckStatus?
+  uptime       Float?
+  responseTime Float?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checks       Check[]
+  incidents    Incident[]
+  alerts       Alert[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  @@index([userId])
+  @@index([status])
+  @@map("monitors")
+}
+
+model Check {
+  id           String      @id @default(cuid())
+  monitorId    String
+  status       CheckStatus
+  responseTime Int?
+  statusCode   Int?
+  errorMessage String?
+  checkedAt    DateTime    @default(now())
+  monitor      Monitor     @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  @@index([monitorId])
+  @@index([checkedAt])
+  @@map("checks")
+}
+
+model Incident {
+  id         String         @id @default(cuid())
+  monitorId  String
+  status     IncidentStatus @default(OPEN)
+  cause      String?
+  startedAt  DateTime       @default(now())
+  resolvedAt DateTime?
+  duration   Int?
+  monitor    Monitor        @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  @@index([monitorId])
+  @@map("incidents")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  @@map("password_reset_tokens")
+}
+
+model Alert {
+  id        String       @id @default(cuid())
+  userId    String
+  monitorId String?
+  channel   AlertChannel
+  target    String
+  enabled   Boolean      @default(true)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitor   Monitor?     @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  @@map("alerts")
+}

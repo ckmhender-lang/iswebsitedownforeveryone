@@ -1,0 +1,17 @@
+[build]
+  command = "npx prisma generate && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_USE_NETLIFY_EDGE = "true"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Scheduled function for monitor cron (every 5 minutes)
+[functions]
+  directory = "netlify/functions"
+
+[functions."cron-check"]
+  schedule = "*/5 * * * *"
