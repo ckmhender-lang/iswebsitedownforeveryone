@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { CheckerForm } from "@/components/checker-form";
 import { Shield, Zap, BarChart3 } from "lucide-react";
-import { AdBanner } from "@/components/ad-banner";
 
 export const metadata: Metadata = {
   title: "Is Website Down Right Now? Check Instantly – Free Tool",
@@ -65,11 +64,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Ad slot 1 – below hero */}
-      <div className="container pb-4">
-        <AdBanner slot="1111111111" format="leaderboard" />
-      </div>
-
       {/* Features */}
       <section className="container py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -106,11 +100,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
-      {/* Ad slot 2 – between features and CTA */}
-      <div className="container pb-4">
-        <AdBanner slot="2222222222" format="rectangle" />
-      </div>
 
       {/* CTA */}
       <section className="container py-20 text-center">
@@ -186,11 +175,6 @@ export default function HomePage() {
           }),
         }}
       />
-
-      {/* Ad slot 3 – above footer */}
-      <div className="container pb-8">
-        <AdBanner slot="3333333333" format="leaderboard" />
-      </div>
 
       <footer className="border-t border-black/10 py-8">
         <div className="container text-center text-sm text-slate-500">
