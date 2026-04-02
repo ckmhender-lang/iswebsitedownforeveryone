@@ -12,23 +12,29 @@ export async function GET(req: Request) {
 
   const now = new Date();
 
+  // Fetch all active monitors that have never been checked OR were checked a while ago
+  // We over-fetch and then filter by each monitor's individual interval below
   const monitors = await prisma.monitor.findMany({
     where: {
       status: "ACTIVE",
       OR: [
         { lastCheckAt: null },
-        {
-          lastCheckAt: {
-            lt: new Date(now.getTime() - 60000), // at least 1 min ago
-          },
-        },
+        { lastCheckAt: { lt: new Date(now.getTime() - 60 * 1000) } },
       ],
     },
     take: 50,
   });
 
+  // Respect each monitor's configured interval (in minutes)
+  const due = monitors.filter((m) => {
+    if (!m.lastCheckAt) return true;
+    return now.getTime() - m.lastCheckAt.getTime() >= m.interval * 60 * 1000;
+  });
+
+  const isDown = (s: string) => s === "DOWN" || s === "TIMEOUT" || s === "DEGRADED";
+
   const results = await Promise.allSettled(
-    monitors.map(async (monitor) => {
+    due.map(async (monitor) => {
       const result = await checkWebsite(monitor.url, monitor.timeout * 1000);
 
       await prisma.check.create({
@@ -41,24 +47,25 @@ export async function GET(req: Request) {
         },
       });
 
-      // Handle incidents + send email alerts
-      const statusChanged =
-        (result.status === "DOWN" && monitor.lastStatus !== "DOWN") ||
-        (result.status === "UP" && monitor.lastStatus === "DOWN");
+      const wasDown = isDown(monitor.lastStatus ?? "");
+      const nowDown = isDown(result.status);
+      const statusChanged = (!wasDown && nowDown) || (wasDown && !nowDown);
 
-      if (result.status === "DOWN" && monitor.lastStatus !== "DOWN") {
+      // Open incident on first DOWN/TIMEOUT/DEGRADED
+      if (nowDown && !wasDown) {
         await prisma.incident.create({
           data: { monitorId: monitor.id, cause: result.error },
         });
-      } else if (result.status === "UP" && monitor.lastStatus === "DOWN") {
+      } else if (!nowDown && wasDown) {
+        // Resolve open incidents when site recovers
         await prisma.incident.updateMany({
           where: { monitorId: monitor.id, status: "OPEN" },
           data: { status: "RESOLVED", resolvedAt: now },
         });
       }
 
-      // Send email alerts on status change
-      if (statusChanged && (result.status === "DOWN" || result.status === "UP")) {
+      // Send email alerts on status change (down or recovery)
+      if (statusChanged) {
         const alerts = await prisma.alert.findMany({
           where: {
             channel: "EMAIL",
@@ -76,7 +83,7 @@ export async function GET(req: Request) {
               to: alert.target,
               monitorName: monitor.name,
               monitorUrl: monitor.url,
-              status: result.status as "DOWN" | "UP",
+              status: nowDown ? "DOWN" : "UP",
               checkedAt: now,
               error: result.error,
             })
@@ -96,5 +103,6 @@ export async function GET(req: Request) {
   );
 
   const succeeded = results.filter((r) => r.status === "fulfilled").length;
-  return NextResponse.json({ checked: monitors.length, succeeded });
+  return NextResponse.json({ checked: due.length, succeeded });
 }
+

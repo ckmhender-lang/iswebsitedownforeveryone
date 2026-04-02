@@ -45,6 +45,22 @@ export async function POST(req: NextRequest) {
       data: { ...data, userId: session.user!.id as string },
     });
 
+    // Auto-create an email alert for the monitor owner so they receive notifications
+    const user = await prisma.user.findUnique({
+      where: { id: session.user!.id as string },
+      select: { email: true },
+    });
+    if (user?.email) {
+      await prisma.alert.create({
+        data: {
+          userId: session.user!.id as string,
+          monitorId: monitor.id,
+          channel: "EMAIL",
+          target: user.email,
+        },
+      });
+    }
+
     return NextResponse.json(monitor, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {
