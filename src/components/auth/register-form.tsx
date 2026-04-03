@@ -24,7 +24,11 @@ export function RegisterForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
-      toast.success("Account created! Check your email to verify your account.");
+      if (data.emailSent === false) {
+        toast.success("Account created! You can sign in right away.");
+      } else {
+        toast.success("Account created! Check your email to verify your account.");
+      }
       router.push("/login");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Registration failed");

@@ -22,19 +22,48 @@ export async function POST(req: NextRequest) {
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    await prisma.user.create({
-      data: { name, email, password: hashed },
-    });
-
-    const token = await createEmailVerificationToken(email);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    await sendVerificationEmail({
-      to: email,
-      name,
-      verifyUrl: `${appUrl}/verify-email?token=${token}`,
+
+    // Try to send verification email. If sending fails (e.g. unverified Resend
+    // domain), auto-verify the user so they are never locked out.
+    let emailSent = false;
+    let verificationToken: string | null = null;
+    try {
+      verificationToken = await createEmailVerificationToken(email);
+      emailSent = true;
+    } catch (tokenErr) {
+      console.error("Failed to create verification token:", tokenErr);
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashed,
+        // Auto-verify immediately if we couldn't even create a token
+        emailVerified: verificationToken ? null : new Date(),
+      },
     });
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    if (verificationToken) {
+      try {
+        await sendVerificationEmail({
+          to: email,
+          name,
+          verifyUrl: `${appUrl}/verify-email?token=${verificationToken}`,
+        });
+      } catch (mailErr) {
+        console.error("Verification email failed to send:", mailErr);
+        // Auto-verify so the user is not permanently locked out
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() },
+        });
+        emailSent = false;
+      }
+    }
+
+    return NextResponse.json({ success: true, emailSent }, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: err.errors[0].message }, { status: 400 });
