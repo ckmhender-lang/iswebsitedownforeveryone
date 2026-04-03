@@ -3,6 +3,7 @@ import { render } from "@react-email/render";
 import { VerificationEmail } from "@/emails/verification-email";
 import { PasswordResetEmail } from "@/emails/password-reset-email";
 import { AlertEmail } from "@/emails/alert-email";
+import { SslAlertEmail } from "@/emails/ssl-alert-email";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
@@ -60,5 +61,38 @@ export async function sendAlertEmail({
   const isDown = status === "DOWN";
   const subject = isDown ? `🔴 ${monitorName} is DOWN` : `🟢 ${monitorName} is back UP`;
   const html = await render(AlertEmail({ monitorName, monitorUrl, status, checkedAt, error }));
+  await sendEmail({ to, subject, html });
+}
+
+interface SendSslAlertEmailParams {
+  to: string;
+  monitorName: string;
+  monitorUrl: string;
+  sslStatus: "EXPIRING_SOON" | "EXPIRED" | "ERROR";
+  daysUntilExpiry?: number;
+  validTo?: Date;
+  issuer?: string;
+  error?: string;
+}
+
+export async function sendSslAlertEmail({
+  to,
+  monitorName,
+  monitorUrl,
+  sslStatus,
+  daysUntilExpiry,
+  validTo,
+  issuer,
+  error,
+}: SendSslAlertEmailParams) {
+  const subject =
+    sslStatus === "EXPIRED"
+      ? `🔴 SSL Certificate EXPIRED — ${monitorName}`
+      : sslStatus === "ERROR"
+      ? `⚠️ SSL Check Failed — ${monitorName}`
+      : `🟡 SSL Expiring in ${daysUntilExpiry}d — ${monitorName}`;
+  const html = await render(
+    SslAlertEmail({ monitorName, monitorUrl, sslStatus, daysUntilExpiry, validTo, issuer, error })
+  );
   await sendEmail({ to, subject, html });
 }

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { MonitorWithChecks } from "@/types";
+import type { SslCheck } from "@prisma/client";
 import { getStatusBg, getStatusColor, formatResponseTime } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -12,6 +13,10 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -23,6 +28,8 @@ interface Props {
 export function MonitorDetail({ monitor }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(monitor.status);
+  const [ssl, setSsl] = useState<SslCheck | null>(monitor.sslCheck);
+  const [sslLoading, setSslLoading] = useState(false);
 
   async function togglePause() {
     const newStatus = status === "ACTIVE" ? "PAUSED" : "ACTIVE";
@@ -44,6 +51,21 @@ export function MonitorDetail({ monitor }: Props) {
     if (res.ok) {
       toast.success("Monitor deleted");
       router.push("/monitors");
+    }
+  }
+
+  async function refreshSsl() {
+    setSslLoading(true);
+    try {
+      const res = await fetch(`/api/ssl/${monitor.id}`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to refresh SSL");
+      const data = await res.json();
+      setSsl(data);
+      toast.success("SSL certificate refreshed");
+    } catch {
+      toast.error("SSL check failed");
+    } finally {
+      setSslLoading(false);
     }
   }
 
@@ -105,6 +127,91 @@ export function MonitorDetail({ monitor }: Props) {
             <p className="text-xl font-bold text-slate-900">{s.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* SSL Certificate */}
+      <div className="rounded-2xl border-2 border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+            {ssl?.status === "VALID" ? (
+              <ShieldCheck className="h-5 w-5 text-green-500" />
+            ) : ssl?.status === "EXPIRING_SOON" ? (
+              <ShieldAlert className="h-5 w-5 text-yellow-500" />
+            ) : (
+              <ShieldX className="h-5 w-5 text-red-400" />
+            )}
+            SSL Certificate
+          </h2>
+          <button
+            onClick={refreshSsl}
+            disabled={sslLoading}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 transition disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${sslLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+
+        {!ssl ? (
+          <div className="px-6 py-8 text-center">
+            <p className="text-slate-500 text-sm mb-3">No SSL data yet</p>
+            <button
+              onClick={refreshSsl}
+              disabled={sslLoading}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+            >
+              {sslLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Check SSL Now
+            </button>
+          </div>
+        ) : (
+          <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Status</p>
+              <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold ${
+                ssl.status === "VALID"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : ssl.status === "EXPIRING_SOON"
+                  ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                  : "border-red-200 bg-red-50 text-red-700"
+              }`}>
+                {ssl.status.replace("_", " ")}
+              </span>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Expires In</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {ssl.daysUntilExpiry !== null && ssl.daysUntilExpiry !== undefined
+                  ? ssl.daysUntilExpiry < 0
+                    ? "Expired"
+                    : `${ssl.daysUntilExpiry} days`
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Expiry Date</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {ssl.validTo ? new Date(ssl.validTo).toLocaleDateString() : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Issuer</p>
+              <p className="text-sm font-semibold text-slate-900 truncate">{ssl.issuer ?? "—"}</p>
+            </div>
+            {ssl.error && (
+              <div className="col-span-2 sm:col-span-4">
+                <p className="text-xs text-red-500">{ssl.error}</p>
+              </div>
+            )}
+            {ssl.lastCheckedAt && (
+              <div className="col-span-2 sm:col-span-4">
+                <p className="text-xs text-slate-400">
+                  Last checked {formatDistanceToNow(new Date(ssl.lastCheckedAt), { addSuffix: true })}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Recent checks */}

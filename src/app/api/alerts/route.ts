@@ -7,6 +7,7 @@ const createSchema = z.object({
   channel: z.enum(["EMAIL", "WEBHOOK", "SLACK"]),
   target: z.string().min(1),
   monitorId: z.string().nullable().optional(),
+  alertType: z.enum(["UPTIME", "SSL"]).optional().default("UPTIME"),
 });
 
 const updateSchema = z.object({
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
       channel: parsed.data.channel,
       target: parsed.data.target,
       monitorId: parsed.data.monitorId ?? null,
+      alertType: parsed.data.alertType,
     },
   });
 

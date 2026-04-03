@@ -1,10 +1,37 @@
 import Link from "next/link";
 import type { MonitorWithCounts } from "@/types";
 import { getStatusBg, formatResponseTime, formatUptime } from "@/lib/utils";
-import { Activity, ExternalLink } from "lucide-react";
+import { Activity, ExternalLink, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 
 interface MonitorGridProps {
   monitors: MonitorWithCounts[];
+}
+
+function SslBadge({ ssl }: { ssl: MonitorWithCounts["sslCheck"] }) {
+  if (!ssl) return null;
+
+  if (ssl.status === "VALID") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+        <ShieldCheck className="h-3 w-3" />
+        SSL {ssl.daysUntilExpiry}d
+      </span>
+    );
+  }
+  if (ssl.status === "EXPIRING_SOON") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-yellow-200 bg-yellow-50 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700">
+        <ShieldAlert className="h-3 w-3" />
+        SSL {ssl.daysUntilExpiry}d
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+      <ShieldX className="h-3 w-3" />
+      SSL {ssl.status === "EXPIRED" ? "EXPIRED" : "ERR"}
+    </span>
+  );
 }
 
 export function MonitorGrid({ monitors }: MonitorGridProps) {
@@ -31,11 +58,14 @@ export function MonitorGrid({ monitors }: MonitorGridProps) {
               <h3 className="font-semibold text-slate-900 truncate">{m.name}</h3>
               <p className="text-xs text-slate-500 truncate mt-0.5">{m.url}</p>
             </div>
-            <span
-              className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium flex-shrink-0 ${getStatusBg(m.lastStatus)}`}
-            >
-              {m.lastStatus ?? "Pending"}
-            </span>
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <span
+                className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${getStatusBg(m.lastStatus)}`}
+              >
+                {m.lastStatus ?? "Pending"}
+              </span>
+              <SslBadge ssl={m.sslCheck} />
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-center">

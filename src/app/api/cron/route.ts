@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkWebsite } from "@/lib/checker";
-import { sendAlertEmail } from "@/lib/email";
+import { checkSsl } from "@/lib/ssl-checker";
+import { sendAlertEmail, sendSslAlertEmail } from "@/lib/email";
 
 // Called by Vercel Cron or an external scheduler
 export async function GET(req: Request) {
@@ -12,8 +13,6 @@ export async function GET(req: Request) {
 
   const now = new Date();
 
-  // Fetch all active monitors that have never been checked OR were checked a while ago
-  // We over-fetch and then filter by each monitor's individual interval below
   const monitors = await prisma.monitor.findMany({
     where: {
       status: "ACTIVE",
@@ -22,6 +21,7 @@ export async function GET(req: Request) {
         { lastCheckAt: { lt: new Date(now.getTime() - 60 * 1000) } },
       ],
     },
+    include: { sslCheck: true },
     take: 50,
   });
 
@@ -35,6 +35,7 @@ export async function GET(req: Request) {
 
   const results = await Promise.allSettled(
     due.map(async (monitor) => {
+      // ── Uptime check ──────────────────────────────────────────
       const result = await checkWebsite(monitor.url, monitor.timeout * 1000);
 
       await prisma.check.create({
@@ -49,27 +50,25 @@ export async function GET(req: Request) {
 
       const wasDown = isDown(monitor.lastStatus ?? "");
       const nowDown = isDown(result.status);
-      const statusChanged = (!wasDown && nowDown) || (wasDown && !nowDown);
+      const uptimeStatusChanged = (!wasDown && nowDown) || (wasDown && !nowDown);
 
-      // Open incident on first DOWN/TIMEOUT/DEGRADED
       if (nowDown && !wasDown) {
         await prisma.incident.create({
           data: { monitorId: monitor.id, cause: result.error },
         });
       } else if (!nowDown && wasDown) {
-        // Resolve open incidents when site recovers
         await prisma.incident.updateMany({
           where: { monitorId: monitor.id, status: "OPEN" },
           data: { status: "RESOLVED", resolvedAt: now },
         });
       }
 
-      // Send email alerts on status change (down or recovery)
-      if (statusChanged) {
-        const alerts = await prisma.alert.findMany({
+      if (uptimeStatusChanged) {
+        const uptimeAlerts = await prisma.alert.findMany({
           where: {
             channel: "EMAIL",
             enabled: true,
+            alertType: "UPTIME",
             OR: [
               { monitorId: monitor.id },
               { monitorId: null, userId: monitor.userId },
@@ -78,7 +77,7 @@ export async function GET(req: Request) {
         });
 
         await Promise.allSettled(
-          alerts.map((alert) =>
+          uptimeAlerts.map((alert) =>
             sendAlertEmail({
               to: alert.target,
               monitorName: monitor.name,
@@ -99,6 +98,75 @@ export async function GET(req: Request) {
           responseTime: result.responseTime ?? undefined,
         },
       });
+
+      // ── SSL check (at most once every 12h per monitor) ────────
+      const sslLastChecked = monitor.sslCheck?.lastCheckedAt;
+      const sslDue =
+        !sslLastChecked ||
+        now.getTime() - sslLastChecked.getTime() >= 12 * 60 * 60 * 1000;
+
+      if (sslDue) {
+        const sslResult = await checkSsl(monitor.url);
+        const previousSslStatus = monitor.sslCheck?.status ?? null;
+
+        await prisma.sslCheck.upsert({
+          where: { monitorId: monitor.id },
+          create: {
+            monitorId: monitor.id,
+            status: sslResult.status,
+            issuer: sslResult.issuer,
+            subject: sslResult.subject,
+            validFrom: sslResult.validFrom,
+            validTo: sslResult.validTo,
+            daysUntilExpiry: sslResult.daysUntilExpiry,
+            error: sslResult.error,
+            lastCheckedAt: now,
+          },
+          update: {
+            status: sslResult.status,
+            issuer: sslResult.issuer,
+            subject: sslResult.subject,
+            validFrom: sslResult.validFrom,
+            validTo: sslResult.validTo,
+            daysUntilExpiry: sslResult.daysUntilExpiry,
+            error: sslResult.error,
+            lastCheckedAt: now,
+          },
+        });
+
+        // Fire SSL alert when status worsens (VALID→EXPIRING_SOON, VALID/EXPIRING→EXPIRED, or new ERROR)
+        const sslWorsened =
+          sslResult.status !== "VALID" && sslResult.status !== previousSslStatus;
+
+        if (sslWorsened) {
+          const sslAlerts = await prisma.alert.findMany({
+            where: {
+              channel: "EMAIL",
+              enabled: true,
+              alertType: "SSL",
+              OR: [
+                { monitorId: monitor.id },
+                { monitorId: null, userId: monitor.userId },
+              ],
+            },
+          });
+
+          await Promise.allSettled(
+            sslAlerts.map((alert) =>
+              sendSslAlertEmail({
+                to: alert.target,
+                monitorName: monitor.name,
+                monitorUrl: monitor.url,
+                sslStatus: sslResult.status as "EXPIRING_SOON" | "EXPIRED" | "ERROR",
+                daysUntilExpiry: sslResult.daysUntilExpiry,
+                validTo: sslResult.validTo,
+                issuer: sslResult.issuer,
+                error: sslResult.error,
+              })
+            )
+          );
+        }
+      }
     })
   );
 

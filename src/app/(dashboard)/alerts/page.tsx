@@ -26,6 +26,7 @@ export default async function AlertsPage() {
     target: a.target,
     enabled: a.enabled,
     monitorId: a.monitorId,
+    alertType: a.alertType as "UPTIME" | "SSL",
   }));
 
   return (

@@ -14,6 +14,7 @@ export default async function MonitorsPage() {
     where: { userId, status: { not: "DELETED" } },
     include: {
       _count: { select: { checks: true, incidents: true } },
+      sslCheck: true,
     },
     orderBy: { createdAt: "desc" },
   });

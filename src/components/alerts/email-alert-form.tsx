@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Plus, Trash2, Loader2 } from "lucide-react";
+import { Mail, Plus, Trash2, Loader2, ShieldCheck, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAlert {
@@ -9,6 +9,7 @@ interface EmailAlert {
   target: string;
   enabled: boolean;
   monitorId: string | null;
+  alertType: "UPTIME" | "SSL";
 }
 
 interface EmailAlertFormProps {
@@ -20,6 +21,7 @@ export function EmailAlertForm({ alerts: initialAlerts, monitors }: EmailAlertFo
   const [alerts, setAlerts] = useState<EmailAlert[]>(initialAlerts);
   const [email, setEmail] = useState("");
   const [monitorId, setMonitorId] = useState<string>("");
+  const [alertType, setAlertType] = useState<"UPTIME" | "SSL">("UPTIME");
   const [loading, setLoading] = useState(false);
 
   async function handleAdd(e: React.FormEvent) {
@@ -35,6 +37,7 @@ export function EmailAlertForm({ alerts: initialAlerts, monitors }: EmailAlertFo
           channel: "EMAIL",
           target: email,
           monitorId: monitorId || null,
+          alertType,
         }),
       });
 
@@ -44,6 +47,7 @@ export function EmailAlertForm({ alerts: initialAlerts, monitors }: EmailAlertFo
       setAlerts((prev) => [...prev, newAlert]);
       setEmail("");
       setMonitorId("");
+      setAlertType("UPTIME");
       toast.success("Email alert added");
     } catch {
       toast.error("Failed to add alert");
@@ -91,6 +95,44 @@ export function EmailAlertForm({ alerts: initialAlerts, monitors }: EmailAlertFo
         </h3>
 
         <div className="space-y-4">
+          {/* Alert type toggle */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Alert Type
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAlertType("UPTIME")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 text-sm font-medium transition ${
+                  alertType === "UPTIME"
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                <Activity className="h-4 w-4" />
+                Uptime Alert
+              </button>
+              <button
+                type="button"
+                onClick={() => setAlertType("SSL")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 text-sm font-medium transition ${
+                  alertType === "SSL"
+                    ? "border-green-500 bg-green-50 text-green-700"
+                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                SSL Alert
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5">
+              {alertType === "UPTIME"
+                ? "Get notified when a monitor goes down or recovers."
+                : "Get notified when an SSL certificate is expiring soon, expired, or has errors."}
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Email Address
@@ -152,9 +194,22 @@ export function EmailAlertForm({ alerts: initialAlerts, monitors }: EmailAlertFo
                 className="flex items-center justify-between rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3"
               >
                 <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-slate-500" />
+                  {alert.alertType === "SSL" ? (
+                    <ShieldCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  ) : (
+                    <Activity className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                  )}
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{alert.target}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-slate-900">{alert.target}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        alert.alertType === "SSL"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}>
+                        {alert.alertType}
+                      </span>
+                    </div>
                     <p className="text-xs text-slate-500">
                       {alert.monitorId
                         ? monitors.find((m) => m.id === alert.monitorId)?.name ?? "Specific monitor"

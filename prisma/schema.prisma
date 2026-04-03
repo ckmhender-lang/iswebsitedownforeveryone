@@ -37,6 +37,18 @@ enum AlertChannel {
   SLACK
 }
 
+enum SslStatus {
+  VALID
+  EXPIRING_SOON
+  EXPIRED
+  ERROR
+}
+
+enum AlertType {
+  UPTIME
+  SSL
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -105,6 +117,7 @@ model Monitor {
   checks       Check[]
   incidents    Incident[]
   alerts       Alert[]
+  sslCheck     SslCheck?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   @@index([userId])
@@ -155,9 +168,25 @@ model Alert {
   channel   AlertChannel
   target    String
   enabled   Boolean      @default(true)
+  alertType AlertType    @default(UPTIME)
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   monitor   Monitor?     @relation(fields: [monitorId], references: [id], onDelete: Cascade)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   @@map("alerts")
+}
+
+model SslCheck {
+  id              String    @id @default(cuid())
+  monitorId       String    @unique
+  status          SslStatus @default(ERROR)
+  issuer          String?
+  subject         String?
+  validFrom       DateTime?
+  validTo         DateTime?
+  daysUntilExpiry Int?
+  error           String?
+  lastCheckedAt   DateTime?
+  monitor         Monitor   @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  @@map("ssl_checks")
 }

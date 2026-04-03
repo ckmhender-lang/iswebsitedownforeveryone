@@ -26,6 +26,7 @@ export default async function MonitorDetailPage({
         orderBy: { startedAt: "desc" },
         take: 20,
       },
+      sslCheck: true,
     },
   });
 
