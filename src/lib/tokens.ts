@@ -28,7 +28,8 @@ export async function verifyEmailToken(
     return { success: false, error: "This link has expired. Please register again." };
   }
 
-  await prisma.user.update({
+  // Use updateMany to avoid P2025 if user was already auto-verified or deleted
+  await prisma.user.updateMany({
     where: { email: record.identifier },
     data: { emailVerified: new Date() },
   });

@@ -55,10 +55,12 @@ export async function POST(req: NextRequest) {
       } catch (mailErr) {
         console.error("Verification email failed to send:", mailErr);
         // Auto-verify so the user is not permanently locked out
+        // and delete the stale token so it can't cause P2025 later
         await prisma.user.update({
           where: { id: user.id },
           data: { emailVerified: new Date() },
         });
+        await prisma.verificationToken.deleteMany({ where: { identifier: email } });
         emailSent = false;
       }
     }
