@@ -50,11 +50,34 @@ export function CheckerForm() {
     fetchSuggestions(e.target.value);
   }
 
+  async function runCheck(target: string) {
+    setShowDropdown(false);
+    setLoading(true);
+    setError("");
+    setResult(null);
+    try {
+      let normalized = target.trim();
+      if (!/^https?:\/\//.test(normalized)) normalized = "https://" + normalized;
+      const res = await fetch("/api/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: normalized }),
+      });
+      if (!res.ok) throw new Error("Check failed");
+      setResult(await res.json());
+    } catch {
+      setError("Failed to check. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function selectSuggestion(domain: string) {
     setUrl(domain);
     setSuggestions([]);
     setShowDropdown(false);
     setActiveIndex(-1);
+    runCheck(domain);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -88,32 +111,7 @@ export function CheckerForm() {
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim()) return;
-
-    setShowDropdown(false);
-    setLoading(true);
-    setError("");
-    setResult(null);
-
-    try {
-      let target = url.trim();
-      if (!/^https?:\/\//.test(target)) {
-        target = "https://" + target;
-      }
-
-      const res = await fetch("/api/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: target }),
-      });
-
-      if (!res.ok) throw new Error("Check failed");
-      const data = await res.json();
-      setResult(data);
-    } catch {
-      setError("Failed to check. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await runCheck(url);
   }
 
   return (
