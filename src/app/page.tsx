@@ -189,6 +189,8 @@ export default function HomePage() {
           <span>
             © {new Date().getFullYear()} iswebsitedownforeveryone.com.{" "}
             <Link href="/privacy-policy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>
+            {" · "}
+            <Link href="/contact" className="hover:text-slate-700 transition-colors">Contact</Link>
           </span>
           <p className="text-xs text-slate-400">
             This website is not affiliated with, sponsored by, or endorsed by any of the services it monitors.
