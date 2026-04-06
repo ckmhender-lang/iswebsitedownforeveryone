@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckerForm } from "@/components/checker-form";
-import { Shield, Zap, BarChart3, ArrowUp, ArrowDown } from "lucide-react";
+import { Shield, Zap, BarChart3, ArrowUp, ArrowDown, Lock, CheckCircle2, AlertTriangle, Clock4 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Is Website Down Right Now? Check Instantly – Free Tool",
@@ -109,6 +109,83 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SSL Certificate Monitoring */}
+      <section className="container py-20">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-1 shadow-2xl">
+          {/* glow rings */}
+          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl pointer-events-none" />
+
+          <div className="relative rounded-[22px] bg-slate-900/80 backdrop-blur-sm px-8 py-12 md:px-16 md:py-14">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+              {/* Left – copy */}
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-1.5 text-sm text-green-400 mb-6">
+                  <Lock className="h-3.5 w-3.5" />
+                  SSL Certificate Monitoring
+                </div>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight">
+                  Never let an expired SSL{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400">
+                    break your site
+                  </span>
+                </h2>
+                <p className="text-slate-400 text-base leading-relaxed mb-8">
+                  We automatically check your SSL certificates and alert you before they expire.
+                  Know your issuer, expiry date, and days remaining — all in your dashboard.
+                </p>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-400 hover:to-cyan-400 text-white font-semibold px-7 py-3 rounded-xl transition-all shadow-lg shadow-green-500/20"
+                >
+                  <Lock className="h-4 w-4" />
+                  Monitor SSL for Free
+                </Link>
+              </div>
+
+              {/* Right – mock SSL card */}
+              <div className="flex flex-col gap-4">
+                {/* Valid cert */}
+                <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-5 flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/15 flex-shrink-0">
+                    <CheckCircle2 className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-sm">github.com</p>
+                    <p className="text-green-400 text-xs mt-0.5">Valid · Expires in 284 days</p>
+                    <p className="text-slate-500 text-xs">Issued by DigiCert Inc</p>
+                  </div>
+                  <span className="ml-auto text-xs font-semibold bg-green-500/20 text-green-400 px-3 py-1 rounded-full flex-shrink-0">VALID</span>
+                </div>
+
+                {/* Expiring soon */}
+                <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5 flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/15 flex-shrink-0">
+                    <AlertTriangle className="h-6 w-6 text-yellow-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-sm">myshop.example.com</p>
+                    <p className="text-yellow-400 text-xs mt-0.5">⚠ Expiring soon · 18 days left</p>
+                    <p className="text-slate-500 text-xs">Issued by Let&apos;s Encrypt</p>
+                  </div>
+                  <span className="ml-auto text-xs font-semibold bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full flex-shrink-0">EXPIRING</span>
+                </div>
+
+                {/* Alert sent */}
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 flex items-center gap-3">
+                  <Clock4 className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                  <p className="text-slate-400 text-xs">
+                    📧 <span className="text-blue-300 font-medium">SSL alert sent</span> to you@example.com — &quot;myshop.example.com expires in 18 days&quot;
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="container py-20 text-center">
         <div className="mx-auto max-w-2xl rounded-2xl border border-blue-500/30 bg-blue-500/10 p-12">
@@ -129,13 +206,14 @@ export default function HomePage() {
 
       {/* SEO – Common searches */}
       <section className="container py-16">
-        <h2 className="text-center text-2xl font-bold text-slate-900 mb-3">
-          What people search for
-        </h2>
-        <p className="text-center text-slate-500 text-sm mb-10">
-          We answer all of these questions instantly and for free.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-700 mb-4">
+            🔍 Common Questions
+          </span>
+          <h2 className="text-3xl font-bold text-slate-900 mb-3">What people search for</h2>
+          <p className="text-slate-500 text-sm">We answer all of these questions instantly and for free.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-5xl mx-auto">
           {[
             "Is a Website Down Right Now? Check Instantly",
             "Website Down Checker – Find Out in Seconds",
@@ -147,13 +225,15 @@ export default function HomePage() {
             "Live Website Uptime Checker – Fast & Free",
             "Is This Site Down for Everyone or Just Me?",
             "Instant Website Downtime Checker Tool",
+            "SSL Certificate Expiry Checker",
+            "Monitor Website Uptime 24/7 Free",
           ].map((phrase) => (
             <div
               key={phrase}
-              className="flex items-center gap-2 rounded-xl border border-black/10 bg-white/40 px-4 py-3 text-sm text-slate-700 backdrop-blur-sm"
+              className="flex items-center gap-3 rounded-xl border border-black/10 bg-white/60 px-4 py-3.5 text-sm text-slate-700 backdrop-blur-sm hover:border-blue-300 hover:bg-blue-50/60 transition-colors group"
             >
-              <span className="text-blue-500 text-base">🔍</span>
-              {phrase}
+              <span className="text-blue-500 text-base flex-shrink-0 group-hover:scale-110 transition-transform">🔍</span>
+              <span className="group-hover:text-blue-700 transition-colors">{phrase}</span>
             </div>
           ))}
         </div>
