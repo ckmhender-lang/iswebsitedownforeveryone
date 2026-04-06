@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { CheckerForm } from "@/components/checker-form";
 import { Shield, Zap, BarChart3, ArrowUp, ArrowDown } from "lucide-react";
 
@@ -16,9 +17,14 @@ export default function HomePage() {
       <header className="border-b border-black/10 backdrop-blur-sm sticky top-0 z-50 bg-apple-core/90">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="flex flex-col items-center justify-center w-7 h-7">
-              <ArrowUp className="h-3.5 w-3.5 text-green-500 -mb-0.5" strokeWidth={3} />
-              <ArrowDown className="h-3.5 w-3.5 text-red-500 -mt-0.5" strokeWidth={3} />
+            <div className="relative w-8 h-8 flex-shrink-0">
+              {/* logo.svg as background */}
+              <Image src="/logo.svg" alt="Logo" width={32} height={32} className="absolute inset-0" />
+              {/* arrows overlaid */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <ArrowUp className="h-3 w-3 text-green-500 -mb-0.5 drop-shadow" strokeWidth={3} />
+                <ArrowDown className="h-3 w-3 text-red-500 -mt-0.5 drop-shadow" strokeWidth={3} />
+              </div>
             </div>
             <span className="font-bold text-xl text-slate-900">iswebsitedownforeveryone.com</span>
           </Link>
