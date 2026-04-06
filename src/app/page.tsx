@@ -177,9 +177,12 @@ export default function HomePage() {
       />
 
       <footer className="border-t border-black/10 py-8">
-        <div className="container text-center text-sm text-slate-500 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="container text-center text-sm text-slate-500 flex flex-col items-center gap-2">
           <span>© {new Date().getFullYear()} iswebsitedownforeveryone.com. Built with Next.js.</span>
           <Link href="/privacy-policy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>
+          <p className="text-xs text-slate-400">
+            This website is not affiliated with, sponsored by, or endorsed by any of the services it monitors.
+          </p>
         </div>
       </footer>
     </div>
