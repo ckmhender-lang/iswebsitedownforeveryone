@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { CheckCircle2, XCircle, Clock, Loader2, Globe } from "lucide-react";
 
 interface CheckResult {
@@ -17,10 +17,78 @@ export function CheckerForm() {
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState("");
 
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/suggestions?q=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        setSuggestions(data.suggestions ?? []);
+        setShowDropdown((data.suggestions ?? []).length > 0);
+        setActiveIndex(-1);
+      } catch {
+        // ignore
+      }
+    }, 180);
+  }, []);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setUrl(e.target.value);
+    fetchSuggestions(e.target.value);
+  }
+
+  function selectSuggestion(domain: string) {
+    setUrl(domain);
+    setSuggestions([]);
+    setShowDropdown(false);
+    setActiveIndex(-1);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showDropdown) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, -1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      selectSuggestion(suggestions[activeIndex]);
+    } else if (e.key === "Escape") {
+      setShowDropdown(false);
+      setActiveIndex(-1);
+    }
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim()) return;
 
+    setShowDropdown(false);
     setLoading(true);
     setError("");
     setResult(null);
@@ -50,15 +118,38 @@ export function CheckerForm() {
   return (
     <div className="w-full max-w-2xl mx-auto">
       <form onSubmit={handleCheck} className="flex gap-3">
-        <div className="relative flex-1">
-          <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+        <div className="relative flex-1" ref={wrapperRef}>
+          <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10 pointer-events-none" />
           <input
             type="text"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
             placeholder="Enter URL (e.g. github.com)"
+            autoComplete="off"
             className="w-full bg-white border-2 border-blue-400 rounded-xl pl-12 pr-4 py-4 text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm"
           />
+
+          {showDropdown && suggestions.length > 0 && (
+            <ul className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+              {suggestions.map((s, i) => (
+                <li
+                  key={s}
+                  onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
+                  onMouseEnter={() => setActiveIndex(i)}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer text-sm transition-colors ${
+                    i === activeIndex
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-slate-700 hover:bg-slate-50"
+                  } ${i < suggestions.length - 1 ? "border-b border-slate-100" : ""}`}
+                >
+                  <Globe className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <span className="font-medium">{s}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <button
           type="submit"
