@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { CheckerForm } from "@/components/checker-form";
-import { Shield, Zap, BarChart3 } from "lucide-react";
+import { Shield, Zap, BarChart3, ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Is Website Down Right Now? Check Instantly – Free Tool",
@@ -16,10 +15,13 @@ export default function HomePage() {
       {/* Nav */}
       <header className="border-b border-black/10 backdrop-blur-sm sticky top-0 z-50 bg-apple-core/90">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Logo" width={28} height={28} />
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="flex flex-col items-center justify-center w-7 h-7">
+              <ArrowUp className="h-3.5 w-3.5 text-green-500 -mb-0.5" strokeWidth={3} />
+              <ArrowDown className="h-3.5 w-3.5 text-red-500 -mt-0.5" strokeWidth={3} />
+            </div>
             <span className="font-bold text-xl text-slate-900">iswebsitedownforeveryone.com</span>
-          </div>
+          </Link>
           <nav className="flex items-center gap-4">
             <Link
               href="/login"
