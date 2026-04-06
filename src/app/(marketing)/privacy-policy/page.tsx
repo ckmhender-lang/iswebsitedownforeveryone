@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy – iswebsitedownforeveryone.com",
@@ -17,8 +19,15 @@ export default function PrivacyPolicyPage() {
       {/* Nav */}
       <header className="border-b border-black/10 backdrop-blur-sm sticky top-0 z-50 bg-apple-core/90">
         <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-slate-900 hover:text-blue-600 transition-colors">
-            {SITE}
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="relative w-8 h-8 flex-shrink-0">
+              <Image src="/logo.svg" alt="Logo" width={32} height={32} className="absolute inset-0" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <ArrowUp className="h-3 w-3 text-green-500 -mb-0.5 drop-shadow" strokeWidth={3} />
+                <ArrowDown className="h-3 w-3 text-red-500 -mt-0.5 drop-shadow" strokeWidth={3} />
+              </div>
+            </div>
+            <span className="font-bold text-xl text-slate-900">{SITE}</span>
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/login" className="text-sm text-slate-700 hover:text-slate-900 transition-colors">

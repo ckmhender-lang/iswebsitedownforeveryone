@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CheckCircle2, XCircle, Clock, Loader2, Globe } from "lucide-react";
+import Image from "next/image";
+import { CheckCircle2, XCircle, Clock, Loader2, Globe, ArrowUp, ArrowDown } from "lucide-react";
 
 interface CheckResult {
   url: string;
@@ -119,7 +120,15 @@ export function CheckerForm() {
     <div className="w-full max-w-2xl mx-auto">
       <form onSubmit={handleCheck} className="flex gap-3">
         <div className="relative flex-1" ref={wrapperRef}>
-          <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10 pointer-events-none" />
+          <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10 pointer-events-none hidden" />
+          {/* Logo in textbox */}
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none w-6 h-6 flex-shrink-0">
+            <Image src="/logo.svg" alt="Logo" width={24} height={24} className="absolute inset-0" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <ArrowUp className="h-2.5 w-2.5 text-green-500 -mb-0.5 drop-shadow" strokeWidth={3} />
+              <ArrowDown className="h-2.5 w-2.5 text-red-500 -mt-0.5 drop-shadow" strokeWidth={3} />
+            </div>
+          </div>
           <input
             type="text"
             value={url}
@@ -128,7 +137,7 @@ export function CheckerForm() {
             onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
             placeholder="Enter URL (e.g. github.com)"
             autoComplete="off"
-            className="w-full bg-white border-2 border-blue-400 rounded-xl pl-12 pr-4 py-4 text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm"
+            className="w-full bg-white border-2 border-blue-400 rounded-xl pl-11 pr-4 py-4 text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm"
           />
 
           {showDropdown && suggestions.length > 0 && (
