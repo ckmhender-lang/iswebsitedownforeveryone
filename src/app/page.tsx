@@ -28,20 +28,7 @@ export default function HomePage() {
             </div>
             <span className="font-bold text-xl text-slate-900">iswebsitedownforeveryone.com</span>
           </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm text-slate-700 hover:text-slate-900 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/register"
-              className="text-sm bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Get Started Free
-            </Link>
-          </nav>
+
         </div>
       </header>
 
@@ -135,13 +122,7 @@ export default function HomePage() {
                   We automatically check your SSL certificates and alert you before they expire.
                   Know your issuer, expiry date, and days remaining — all in your dashboard.
                 </p>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-400 hover:to-cyan-400 text-white font-semibold px-7 py-3 rounded-xl transition-all shadow-lg shadow-green-500/20"
-                >
-                  <Lock className="h-4 w-4" />
-                  Monitor SSL for Free
-                </Link>
+
               </div>
 
               {/* Right – mock SSL card */}
@@ -186,23 +167,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container py-20 text-center">
-        <div className="mx-auto max-w-2xl rounded-2xl border border-blue-500/30 bg-blue-500/10 p-12">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            Start monitoring for free
-          </h2>
-          <p className="text-slate-600 mb-8">
-            Monitor up to 10 websites. No credit card required.
-          </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors"
-          >
-            Create Free Account
-          </Link>
-        </div>
-      </section>
+
 
       {/* SEO – Common searches */}
       <section className="container py-16">

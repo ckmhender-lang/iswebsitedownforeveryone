@@ -29,17 +29,7 @@ export default function PrivacyPolicyPage() {
             </div>
             <span className="font-bold text-xl text-slate-900">{SITE}</span>
           </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-slate-700 hover:text-slate-900 transition-colors">
-              Sign In
-            </Link>
-            <Link
-              href="/register"
-              className="text-sm bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Get Started Free
-            </Link>
-          </nav>
+
         </div>
       </header>
 
