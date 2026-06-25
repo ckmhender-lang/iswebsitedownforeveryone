@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { CheckCircle2, XCircle, Clock, Loader2, Globe, ArrowUp, ArrowDown, Lock, Unlock, ShieldCheck, Activity } from "lucide-react";
+import { Clock, Loader2, Globe, ArrowUp, ArrowDown, Lock, Unlock, ShieldCheck, Activity } from "lucide-react";
 
 interface CheckResult {
   url: string;
