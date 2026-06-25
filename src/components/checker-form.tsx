@@ -1,15 +1,25 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { CheckCircle2, XCircle, Clock, Loader2, Globe, ArrowUp, ArrowDown } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2, Globe, ArrowUp, ArrowDown, Lock, Unlock, ShieldCheck, Activity } from "lucide-react";
 
 interface CheckResult {
   url: string;
-  status: "UP" | "DOWN" | "ERROR";
+  status: "UP" | "DOWN" | "TIMEOUT" | "DEGRADED";
   statusCode?: number;
   responseTime?: number;
   error?: string;
   checkedAt: string;
+  uptime?: number | null;
+  ssl?: {
+    status: "VALID" | "EXPIRING_SOON" | "EXPIRED" | "ERROR";
+    issuer?: string;
+    subject?: string;
+    validFrom?: string;
+    validTo?: string;
+    daysUntilExpiry?: number;
+    error?: string;
+  } | null;
 }
 
 export function CheckerForm() {
@@ -176,56 +186,141 @@ export function CheckerForm() {
       )}
 
       {result && (
-        <div className={`mt-6 rounded-2xl border-2 p-6 shadow-lg transition-all ${
-          result.status === "UP"
-            ? "border-green-400 bg-green-50"
-            : "border-red-400 bg-red-50"
-        }`}>
-          <div className="flex items-center gap-4">
-            {result.status === "UP" ? (
-              <CheckCircle2 className="h-10 w-10 text-green-500 flex-shrink-0" />
-            ) : (
-              <XCircle className="h-10 w-10 text-red-500 flex-shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className={`text-xl font-bold ${result.status === "UP" ? "text-green-700" : "text-red-700"}`}>
-                {result.status === "UP"
-                  ? "✅ Website is UP!"
-                  : "❌ Website is DOWN!"}
-              </p>
-              <p className="text-slate-500 text-sm truncate">{result.url}</p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {result.statusCode && (
-              <div className={`rounded-xl p-3 border ${result.status === "UP" ? "bg-green-100 border-green-200" : "bg-red-100 border-red-200"}`}>
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">HTTP Status</p>
-                <p className={`text-lg font-semibold ${result.status === "UP" ? "text-green-800" : "text-red-800"}`}>{result.statusCode}</p>
+        <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all animate-in fade-in slide-in-from-bottom-4 duration-300 text-left">
+          {/* Card Top Banner / Status summary */}
+          <div className={`px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b ${
+            result.status === "UP" ? "bg-emerald-50/50 border-emerald-100" : "bg-rose-50/50 border-rose-100"
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-3 w-3">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  result.status === "UP" ? "bg-emerald-400" : "bg-rose-400"
+                }`}></span>
+                <span className={`relative inline-flex rounded-full h-3 w-3 ${
+                  result.status === "UP" ? "bg-emerald-500" : "bg-rose-500"
+                }`}></span>
               </div>
-            )}
-            {result.responseTime && (
-              <div className={`rounded-xl p-3 border ${result.status === "UP" ? "bg-green-100 border-green-200" : "bg-red-100 border-red-200"}`}>
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Response Time</p>
-                <p className={`text-lg font-semibold flex items-center gap-1 ${result.status === "UP" ? "text-green-800" : "text-red-800"}`}>
-                  <Clock className="h-4 w-4 text-slate-500" />
-                  {result.responseTime}ms
+              <div>
+                <h3 className="font-bold text-lg text-slate-800 tracking-tight">
+                  {result.url.replace(/^https?:\/\/(www\.)?/, "")}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Checked at {new Date(result.checkedAt).toLocaleTimeString()}
                 </p>
               </div>
-            )}
-            <div className={`rounded-xl p-3 border ${result.status === "UP" ? "bg-green-100 border-green-200" : "bg-red-100 border-red-200"}`}>
-              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Checked At</p>
-              <p className={`text-sm font-semibold ${result.status === "UP" ? "text-green-800" : "text-red-800"}`}>
-                {new Date(result.checkedAt).toLocaleTimeString()}
-              </p>
+            </div>
+            
+            <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide shadow-sm border ${
+              result.status === "UP"
+                ? "bg-emerald-500/10 text-emerald-700 border-emerald-200/50"
+                : "bg-rose-500/10 text-rose-700 border-rose-200/50"
+            }`}>
+              {result.status === "UP" ? "ONLINE" : "OFFLINE"}
             </div>
           </div>
 
-          {result.error && (
-            <p className="mt-3 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg p-3">
-              {result.error}
-            </p>
-          )}
+          {/* Details Grid */}
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* HTTP Status */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 hover:border-slate-200 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status Code</span>
+              </div>
+              <p className={`text-xl font-extrabold tracking-tight ${result.status === "UP" ? "text-emerald-600" : "text-rose-600"}`}>
+                {result.statusCode ?? "ERR"}
+              </p>
+              <p className="text-xs text-slate-505 mt-1">
+                {result.status === "UP" ? "HTTP connection successful" : "Server connection failed"}
+              </p>
+            </div>
+
+            {/* Response Time */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 hover:border-slate-200 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Response Speed</span>
+              </div>
+              <p className="text-xl font-extrabold text-slate-800 tracking-tight">
+                {result.responseTime ? `${result.responseTime} ms` : "N/A"}
+              </p>
+              <p className="text-xs text-slate-505 mt-1">
+                {result.responseTime && result.responseTime < 300
+                  ? "⚡ Extremely fast response"
+                  : result.responseTime && result.responseTime < 1000
+                  ? "⏱ Normal response time"
+                  : "⏳ Slow response time"}
+              </p>
+            </div>
+
+            {/* Uptime */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 hover:border-slate-200 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Uptime History</span>
+              </div>
+              <p className="text-xl font-extrabold text-slate-800 tracking-tight">
+                {result.uptime !== null && result.uptime !== undefined
+                  ? `${result.uptime.toFixed(2)}%`
+                  : "100.0%"}
+              </p>
+              <p className="text-xs text-slate-505 mt-1">
+                {result.uptime !== null && result.uptime !== undefined
+                  ? "📈 Based on 24/7 monitoring"
+                  : "ℹ Not actively monitored yet"}
+              </p>
+            </div>
+
+            {/* SSL Check */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 hover:border-slate-200 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                {result.ssl?.status === "VALID" || result.ssl?.status === "EXPIRING_SOON" ? (
+                  <Lock className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <Unlock className="h-4 w-4 text-rose-500" />
+                )}
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">SSL Security</span>
+              </div>
+              <p className={`text-xl font-extrabold tracking-tight ${
+                result.ssl?.status === "VALID"
+                  ? "text-emerald-600"
+                  : result.ssl?.status === "EXPIRING_SOON"
+                  ? "text-yellow-600"
+                  : "text-rose-600"
+              }`}>
+                {result.ssl?.status === "VALID"
+                  ? "SSL Secure"
+                  : result.ssl?.status === "EXPIRING_SOON"
+                  ? "Expiring Soon"
+                  : result.ssl?.status === "EXPIRED"
+                  ? "Expired"
+                  : "No SSL"}
+              </p>
+              <p className="text-xs text-slate-505 mt-1 truncate">
+                {result.ssl?.daysUntilExpiry !== undefined
+                  ? `${result.ssl.daysUntilExpiry} days remaining`
+                  : result.ssl?.error ?? "Insecure connection / HTTP"}
+              </p>
+            </div>
+
+          </div>
+
+          {/* Description summary */}
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 text-sm text-slate-600 leading-relaxed">
+            {result.status === "UP" ? (
+              <span>
+                <strong>{result.url.replace(/^https?:\/\/(www\.)?/, "")}</strong> is up and responsive. 
+                {result.responseTime ? ` The server responded in ${result.responseTime}ms.` : ""} 
+                {result.ssl?.status === "VALID" ? " The SSL certificate is valid and secure." : ""}
+              </span>
+            ) : (
+              <span>
+                <strong>{result.url.replace(/^https?:\/\/(www\.)?/, "")}</strong> is currently down or unreachable. 
+                {result.error ? ` Connection failed with error: "${result.error}".` : ""}
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>

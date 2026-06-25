@@ -51,8 +51,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto">
-            Instantly check if a website is down for all or  everyone or just you. Set up
-            monitors and get alerted the moment something goes wrong.
+            Instantly check if a website is down for everyone or just you. Get real-time status, response speed, and SSL security insights.
           </p>
 
           <CheckerForm />
