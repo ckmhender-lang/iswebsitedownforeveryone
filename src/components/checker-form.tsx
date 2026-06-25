@@ -22,11 +22,37 @@ interface CheckResult {
   } | null;
 }
 
+interface PopularSite {
+  name: string;
+  domain: string;
+  status: "UP" | "DOWN";
+  responseTime: number;
+}
+
 export function CheckerForm() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState("");
+
+  const [popularSites, setPopularSites] = useState<PopularSite[]>([]);
+  const [loadingPopular, setLoadingPopular] = useState(true);
+
+  useEffect(() => {
+    async function loadPopular() {
+      try {
+        const res = await fetch("/api/popular");
+        if (res.ok) {
+          setPopularSites(await res.json());
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoadingPopular(false);
+      }
+    }
+    loadPopular();
+  }, []);
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -323,6 +349,60 @@ export function CheckerForm() {
           </div>
         </div>
       )}
+
+      {/* Popular Websites Status Section */}
+      <div className="mt-12 text-left">
+        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
+          Popular Websites Status
+        </h3>
+        
+        {loadingPopular ? (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-16 rounded-xl border border-slate-100 bg-white/50 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {popularSites.map((site) => (
+              <button
+                key={site.domain}
+                onClick={() => selectSuggestion(site.domain)}
+                className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-blue-400 hover:shadow-md transition group text-left w-full"
+              >
+                <img
+                  src={`https://www.google.com/s2/favicons?sz=32&domain=${site.domain}`}
+                  alt={site.name}
+                  width={20}
+                  height={20}
+                  className="rounded-sm flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-semibold text-xs text-slate-800 truncate">
+                      {site.name}
+                    </span>
+                    <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                      {site.status === "UP" && (
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      )}
+                      <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                        site.status === "UP" ? "bg-emerald-500" : "bg-rose-500"
+                      }`}></span>
+                    </span>
+                  </div>
+                  <p className="text-xxs text-slate-450 truncate">
+                    {site.status === "UP" ? `${site.responseTime}ms` : "Offline"}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
