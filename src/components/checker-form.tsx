@@ -373,12 +373,13 @@ export function CheckerForm() {
                 onClick={() => selectSuggestion(site.domain)}
                 className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-blue-400 hover:shadow-md transition group text-left w-full"
               >
-                <img
+                <Image
                   src={`https://www.google.com/s2/favicons?sz=32&domain=${site.domain}`}
                   alt={site.name}
                   width={20}
                   height={20}
                   className="rounded-sm flex-shrink-0"
+                  unoptimized
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
