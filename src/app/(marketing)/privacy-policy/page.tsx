@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-apple-core">
       {/* Nav */}
       <header className="border-b border-black/10 backdrop-blur-sm sticky top-0 z-50 bg-apple-core/90">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container max-w-4xl flex h-16 items-center justify-center">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="relative w-8 h-8 flex-shrink-0">
               <Image src="/logo.svg" alt="Logo" width={32} height={32} className="absolute inset-0" />
@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
         </div>
       </header>
 
-      <main className="container py-16 max-w-3xl mx-auto">
+      <main className="container max-w-4xl py-16 mx-auto">
         <h1 className="text-4xl font-extrabold text-slate-900 mb-2">Privacy Policy</h1>
         <p className="text-sm text-slate-500 mb-10">Last updated: {LAST_UPDATED}</p>
 
@@ -246,7 +246,7 @@ export default function PrivacyPolicyPage() {
       </main>
 
       <footer className="border-t border-black/10 py-8 mt-16">
-        <div className="container text-center text-sm text-slate-500 flex flex-col items-center gap-2">
+        <div className="container max-w-4xl text-center text-sm text-slate-500 flex flex-col items-center gap-2">
           <span>
             © {new Date().getFullYear()} {SITE}.{" "}
             <Link href="/privacy-policy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>

@@ -13,9 +13,8 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-apple-core">
-      {/* Nav */}
       <header className="border-b border-black/10 backdrop-blur-sm sticky top-0 z-50 bg-apple-core/90">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container max-w-4xl flex h-16 items-center justify-center">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="relative w-8 h-8 flex-shrink-0">
               {/* logo.svg as background */}
@@ -28,13 +27,12 @@ export default function HomePage() {
             </div>
             <span className="font-bold text-xl text-slate-900">iswebsitedownforeveryone.com</span>
           </Link>
-
         </div>
       </header>
 
       {/* Hero */}
-      <section className="container py-24 text-center">
-        <div className="mx-auto max-w-3xl">
+      <section className="container max-w-4xl py-16 text-center">
+        <div className="mx-auto max-w-4xl">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-700">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -59,7 +57,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="container py-20">
+      <section className="container max-w-4xl py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
@@ -100,7 +98,7 @@ export default function HomePage() {
 
 
       {/* SEO – Common searches */}
-      <section className="container py-16">
+      <section className="container max-w-4xl py-12">
         <div className="text-center mb-10">
           <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-700 mb-4">
             🔍 Common Questions
@@ -108,7 +106,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-slate-900 mb-3">What people search for</h2>
           <p className="text-slate-500 text-sm">We answer all of these questions instantly and for free.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
           {[
             "Is a Website Down Right Now? Check Instantly",
             "Website Down Checker – Find Out in Seconds",
@@ -160,7 +158,7 @@ export default function HomePage() {
       />
 
       <footer className="border-t border-black/10 py-8">
-        <div className="container text-center text-sm text-slate-500 flex flex-col items-center gap-2">
+        <div className="container max-w-4xl text-center text-sm text-slate-500 flex flex-col items-center gap-2">
           <span>
             © {new Date().getFullYear()} iswebsitedownforeveryone.com.{" "}
             <Link href="/privacy-policy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>

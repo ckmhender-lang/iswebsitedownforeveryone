@@ -51,7 +51,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-apple-core">
       {/* Nav */}
       <header className="border-b border-black/10 backdrop-blur-sm sticky top-0 z-50 bg-apple-core/90">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container max-w-4xl flex h-16 items-center justify-center">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="relative w-8 h-8 flex-shrink-0">
               <Image src="/logo.svg" alt="Logo" width={32} height={32} className="absolute inset-0" />
@@ -162,7 +162,7 @@ export default function ContactPage() {
       </main>
 
       <footer className="border-t border-black/10 py-8 mt-16">
-        <div className="container text-center text-sm text-slate-500 flex flex-col items-center gap-2">
+        <div className="container max-w-4xl text-center text-sm text-slate-500 flex flex-col items-center gap-2">
           <span>
             © {new Date().getFullYear()} {SITE}.{" "}
             <Link href="/privacy-policy" className="hover:text-slate-700 transition-colors">Privacy Policy</Link>
