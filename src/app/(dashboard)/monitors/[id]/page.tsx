@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getMonitorWithDetailsForUser } from "@/lib/local-store";
 import { MonitorDetail } from "@/components/monitors/monitor-detail";
 
 export const metadata: Metadata = { title: "Monitor Detail" };
@@ -13,22 +13,9 @@ export default async function MonitorDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const userId = session!.user!.id as string;
+  const userId = session!.user.id;
 
-  const monitor = await prisma.monitor.findFirst({
-    where: { id, userId },
-    include: {
-      checks: {
-        orderBy: { checkedAt: "desc" },
-        take: 100,
-      },
-      incidents: {
-        orderBy: { startedAt: "desc" },
-        take: 20,
-      },
-      sslCheck: true,
-    },
-  });
+  const monitor = getMonitorWithDetailsForUser(id, userId);
 
   if (!monitor) notFound();
 

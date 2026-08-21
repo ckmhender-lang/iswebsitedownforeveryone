@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  createAlert,
+  deleteAlert,
+  listAlertsForUser,
+  updateAlertEnabled,
+} from "@/lib/local-store";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -22,10 +27,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const alerts = await prisma.alert.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const alerts = listAlertsForUser(session.user.id);
 
   return NextResponse.json(alerts);
 }
@@ -43,14 +45,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const alert = await prisma.alert.create({
-    data: {
-      userId: session.user.id,
-      channel: parsed.data.channel,
-      target: parsed.data.target,
-      monitorId: parsed.data.monitorId ?? null,
-      alertType: parsed.data.alertType,
-    },
+  const alert = createAlert({
+    userId: session.user.id,
+    channel: parsed.data.channel,
+    target: parsed.data.target,
+    monitorId: parsed.data.monitorId ?? null,
+    alertType: parsed.data.alertType,
   });
 
   return NextResponse.json(alert, { status: 201 });
@@ -69,12 +69,9 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const alert = await prisma.alert.updateMany({
-    where: { id: parsed.data.id, userId: session.user.id },
-    data: { enabled: parsed.data.enabled },
-  });
+  const updated = updateAlertEnabled(parsed.data.id, session.user.id, parsed.data.enabled);
 
-  if (alert.count === 0) {
+  if (!updated) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -95,11 +92,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  const result = await prisma.alert.deleteMany({
-    where: { id, userId: session.user.id },
-  });
+  const deleted = deleteAlert(id, session.user.id);
 
-  if (result.count === 0) {
+  if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

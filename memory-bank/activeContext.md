@@ -1,20 +1,19 @@
 # Active context
 
 **Current focus** (one short paragraph):
-Fixed all UI styling issues — textbox inputs now have blue borders with black text, cards have colorful pastel backgrounds with proper shadows and visible text on the light cream background.
+Converted app runtime to local-only mode: removed Prisma and NextAuth dependencies from active code paths, switched auth/session + monitors/alerts/check/incident/SSL state to in-memory local store, and kept existing UI/API response shapes compatible.
 
 **In progress**:
 
-- [x] Fix invisible text in login/register/add-monitor inputs
-- [x] Fix card styling across dashboard, monitors, alerts pages
+- [x] Replace Prisma-backed storage with local in-memory store
+- [x] Replace NextAuth credential flow with local auth endpoints and cookie session
+- [x] Rewire dashboard/monitor/alert APIs and pages to local data access
 
 **Decisions (recent)**:
 
-- All textboxes: `border-2 border-blue-400`, `bg-white`, `text-black`
-- Stats cards: pastel color backgrounds (blue-50, green-50, red-50, purple-50) with colored borders
-- Monitor/detail/alert cards: white bg, `border-2 border-slate-200`, `shadow-sm`
-- Auth page card containers: white bg with blue-200 border
-- Labels changed from `text-slate-300` (invisible) to `text-slate-700`
+- Local store lives in `src/lib/local-store.ts` and is process-memory only (resets on restart)
+- Session cookie key is `iswd_session`; login/logout now use `/api/auth/login` and `/api/auth/logout`
+- Build no longer runs Prisma generation; `db:*` scripts now print local-mode disabled message
 
 **Open questions**:
 

@@ -1,6 +1,10 @@
 import { Metadata } from "next";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  countChecksForUserSince,
+  countOpenIncidentsForUser,
+  listMonitorsForUser,
+} from "@/lib/local-store";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { MonitorList } from "@/components/dashboard/monitor-list";
 
@@ -8,24 +12,11 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId = session!.user!.id as string;
+  const userId = session!.user.id;
 
-  const [monitors, totalChecksToday, openIncidents] = await Promise.all([
-    prisma.monitor.findMany({
-      where: { userId, status: { not: "DELETED" } },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    }),
-    prisma.check.count({
-      where: {
-        monitor: { userId },
-        checkedAt: { gte: new Date(Date.now() - 86400000) },
-      },
-    }),
-    prisma.incident.count({
-      where: { monitor: { userId }, status: "OPEN" },
-    }),
-  ]);
+  const monitors = listMonitorsForUser(userId).slice(0, 20);
+  const totalChecksToday = countChecksForUserSince(userId, new Date(Date.now() - 86400000));
+  const openIncidents = countOpenIncidentsForUser(userId);
 
   const upCount = monitors.filter((m: { lastStatus: string | null }) => m.lastStatus === "UP").length;
   const downCount = monitors.filter((m: { lastStatus: string | null }) => m.lastStatus === "DOWN").length;

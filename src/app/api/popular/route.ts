@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { checkWebsite } from "@/lib/checker";
-import { prisma } from "@/lib/prisma";
 
 const POPULAR_SITES = [
   { name: "Google", domain: "google.com", url: "https://www.google.com" },
@@ -21,28 +20,7 @@ export async function GET() {
     const results = await Promise.all(
       POPULAR_SITES.map(async (site) => {
         try {
-          // 1. Check if we have an active monitor in the DB with this hostname
-          const monitor = await prisma.monitor.findFirst({
-            where: {
-              url: { contains: site.domain },
-              status: "ACTIVE",
-            },
-            select: {
-              lastStatus: true,
-              responseTime: true,
-            },
-          });
-
-          if (monitor && monitor.lastStatus) {
-            return {
-              name: site.name,
-              domain: site.domain,
-              status: monitor.lastStatus === "UP" ? "UP" : "DOWN",
-              responseTime: monitor.responseTime ?? 0,
-            };
-          }
-
-          // 2. Fallback to quick fetch check with a short timeout of 1500ms
+          // Local-only status check (no database dependency)
           const check = await checkWebsite(site.url, 1500);
           return {
             name: site.name,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { deleteMonitorSoft, getMonitorByIdForUser, updateMonitor } from "@/lib/local-store";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -11,9 +11,7 @@ const updateSchema = z.object({
 });
 
 async function getMonitor(id: string, userId: string) {
-  return prisma.monitor.findFirst({
-    where: { id, userId, status: { not: "DELETED" } },
-  });
+  return getMonitorByIdForUser(id, userId);
 }
 
 export async function GET(
@@ -24,7 +22,7 @@ export async function GET(
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const monitor = await getMonitor(id, session.user!.id as string);
+  const monitor = await getMonitor(id, session.user.id);
   if (!monitor) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json(monitor);
@@ -38,13 +36,14 @@ export async function PATCH(
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const monitor = await getMonitor(id, session.user!.id as string);
+  const monitor = await getMonitor(id, session.user.id);
   if (!monitor) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   try {
     const body = await req.json();
     const data = updateSchema.parse(body);
-    const updated = await prisma.monitor.update({ where: { id }, data });
+    const updated = updateMonitor(id, data);
+    if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(updated);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -62,9 +61,9 @@ export async function DELETE(
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const monitor = await getMonitor(id, session.user!.id as string);
+  const monitor = await getMonitor(id, session.user.id);
   if (!monitor) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.monitor.update({ where: { id }, data: { status: "DELETED" } });
+  deleteMonitorSoft(id);
   return NextResponse.json({ success: true });
 }

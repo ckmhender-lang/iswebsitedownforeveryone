@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { validatePasswordResetToken } from "@/lib/tokens";
+import { consumePasswordResetToken, updateUserPassword } from "@/lib/local-store";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    await prisma.user.update({
-      where: { email: result.email },
-      data: { password: hashed },
-    });
-    await prisma.passwordResetToken.delete({ where: { token } });
+    const updated = updateUserPassword(result.email, hashed);
+    if (!updated) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
+    consumePasswordResetToken(token);
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  countMonitorsForUser,
+  createAlert,
+  createMonitor,
+  listMonitorsForUser,
+} from "@/lib/local-store";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -14,10 +19,7 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const monitors = await prisma.monitor.findMany({
-    where: { userId: session.user!.id as string, status: { not: "DELETED" } },
-    orderBy: { createdAt: "desc" },
-  });
+  const monitors = listMonitorsForUser(session.user.id);
 
   return NextResponse.json(monitors);
 }
@@ -30,9 +32,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = createSchema.parse(body);
 
-    const count = await prisma.monitor.count({
-      where: { userId: session.user!.id as string, status: { not: "DELETED" } },
-    });
+    const count = countMonitorsForUser(session.user.id);
 
     if (count >= 10) {
       return NextResponse.json(
@@ -41,23 +41,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const monitor = await prisma.monitor.create({
-      data: { ...data, userId: session.user!.id as string },
-    });
+    const monitor = createMonitor({ ...data, userId: session.user.id });
 
-    // Auto-create an email alert for the monitor owner so they receive notifications
-    const user = await prisma.user.findUnique({
-      where: { id: session.user!.id as string },
-      select: { email: true },
-    });
-    if (user?.email) {
-      await prisma.alert.create({
-        data: {
-          userId: session.user!.id as string,
-          monitorId: monitor.id,
-          channel: "EMAIL",
-          target: user.email,
-        },
+    if (session.user.email) {
+      createAlert({
+        userId: session.user.id,
+        monitorId: monitor.id,
+        channel: "EMAIL",
+        target: session.user.email,
       });
     }
 

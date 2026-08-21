@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkWebsite } from "@/lib/checker";
 import { checkSsl } from "@/lib/ssl-checker";
-import { prisma } from "@/lib/prisma";
+import { findActiveMonitorByHostname } from "@/lib/local-store";
 import { z } from "zod";
 
 const schema = z.object({
@@ -26,27 +26,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Lookup existing monitor database record to extract uptime percentage
+    // Lookup existing local monitor record to extract uptime percentage
     let uptime = null;
-    try {
-      const parsed = new URL(url);
-      const hostname = parsed.hostname.replace(/^www\./, "");
-      const monitor = await prisma.monitor.findFirst({
-        where: {
-          url: {
-            contains: hostname,
-          },
-          status: "ACTIVE",
-        },
-        select: {
-          uptime: true,
-        },
-      });
-      if (monitor) {
-        uptime = monitor.uptime;
-      }
-    } catch (dbErr) {
-      console.error("Database query failed:", dbErr);
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.replace(/^www\./, "");
+    const monitor = findActiveMonitorByHostname(hostname);
+    if (monitor) {
+      uptime = monitor.uptime;
     }
 
     return NextResponse.json({

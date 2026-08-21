@@ -6,11 +6,13 @@
 
 
 
+
+
 <!-- github-copilot-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (GitHub Copilot Toolbox)
 
-_Last synced: 2026-04-02T00:41:09.097Z._
+_Last synced: 2026-08-21T18:49:37.166Z._
 
 - **Full report:** `.github/copilot-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools**, use **Copilot Chat → Agent** and **trust/start** the right servers in the MCP UI.
@@ -38,6 +40,7 @@ _None found (or no workspace open)._
 - **skill-creator** — `C:\Users\Mahen\.claude\skills\skill-creator` — Create new skills, modify and improve existing skills. Use when users want to create a skill from scratch, edit, or optimize an existing skill.
 
 <!-- github-copilot-toolbox:mcp-skills-awareness-end -->
+
 <!-- github-copilot-memory-bank:begin -->
 # Plan / Act workflow (Cursor-style)
 

@@ -1,32 +1,25 @@
 import { Metadata } from "next";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { listAlertsForUser, listMonitorsForUser } from "@/lib/local-store";
 import { EmailAlertForm } from "@/components/alerts/email-alert-form";
 
 export const metadata: Metadata = { title: "Alerts" };
 
 export default async function AlertsPage() {
   const session = await auth();
-  const userId = session!.user!.id as string;
+  const userId = session!.user.id;
 
-  const [alerts, monitors] = await Promise.all([
-    prisma.alert.findMany({
-      where: { userId, channel: "EMAIL" },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.monitor.findMany({
-      where: { userId, status: { not: "DELETED" } },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const alerts = listAlertsForUser(userId).filter((a) => a.channel === "EMAIL");
+  const monitors = listMonitorsForUser(userId)
+    .map((m) => ({ id: m.id, name: m.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const emailAlerts = alerts.map((a) => ({
     id: a.id,
     target: a.target,
     enabled: a.enabled,
     monitorId: a.monitorId,
-    alertType: a.alertType as "UPTIME" | "SSL",
+    alertType: a.alertType,
   }));
 
   return (

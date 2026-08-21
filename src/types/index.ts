@@ -1,18 +1,18 @@
-import type { Monitor, Check, Incident, User, SslCheck } from "@prisma/client";
+import type { LocalCheck, LocalIncident, LocalMonitor, LocalSslCheck, LocalUser } from "@/lib/local-store";
 
-export type MonitorWithCounts = Monitor & {
+export type MonitorWithCounts = LocalMonitor & {
   _count: { checks: number; incidents: number };
-  sslCheck: SslCheck | null;
+  sslCheck: LocalSslCheck | null;
 };
 
-export type MonitorWithChecks = Monitor & {
-  checks: Check[];
-  incidents: Incident[];
-  sslCheck: SslCheck | null;
+export type MonitorWithChecks = LocalMonitor & {
+  checks: LocalCheck[];
+  incidents: LocalIncident[];
+  sslCheck: LocalSslCheck | null;
 };
 
-export type UserWithMonitors = User & {
-  monitors: Monitor[];
+export type UserWithMonitors = LocalUser & {
+  monitors: LocalMonitor[];
 };
 
 export type DashboardStats = {

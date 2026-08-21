@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Clock, Loader2, Globe, ArrowUp, ArrowDown, Lock, Unlock, ShieldCheck, Activity } from "lucide-react";
+import { Loader2, Globe, ArrowUp, ArrowDown, Lock, Unlock, ShieldCheck, Activity } from "lucide-react";
 
 interface CheckResult {
   url: string;
@@ -25,34 +25,26 @@ interface CheckResult {
 interface PopularSite {
   name: string;
   domain: string;
-  status: "UP" | "DOWN";
-  responseTime: number;
 }
+
+const POPULAR_SITES: PopularSite[] = [
+  { name: "Google", domain: "google.com" },
+  { name: "YouTube", domain: "youtube.com" },
+  { name: "Facebook", domain: "facebook.com" },
+  { name: "Instagram", domain: "instagram.com" },
+  { name: "X (Twitter)", domain: "twitter.com" },
+  { name: "Netflix", domain: "netflix.com" },
+  { name: "Amazon", domain: "amazon.com" },
+  { name: "Wikipedia", domain: "wikipedia.org" },
+  { name: "Reddit", domain: "reddit.com" },
+  { name: "Yahoo", domain: "yahoo.com" },
+];
 
 export function CheckerForm() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState("");
-
-  const [popularSites, setPopularSites] = useState<PopularSite[]>([]);
-  const [loadingPopular, setLoadingPopular] = useState(true);
-
-  useEffect(() => {
-    async function loadPopular() {
-      try {
-        const res = await fetch("/api/popular");
-        if (res.ok) {
-          setPopularSites(await res.json());
-        }
-      } catch {
-        // ignore
-      } finally {
-        setLoadingPopular(false);
-      }
-    }
-    loadPopular();
-  }, []);
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -262,24 +254,6 @@ export function CheckerForm() {
               </p>
             </div>
 
-            {/* Response Time */}
-            <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 hover:border-slate-200 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-slate-400" />
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Response Speed</span>
-              </div>
-              <p className="text-xl font-extrabold text-slate-800 tracking-tight">
-                {result.responseTime ? `${result.responseTime} ms` : "N/A"}
-              </p>
-              <p className="text-xs text-slate-505 mt-1">
-                {result.responseTime && result.responseTime < 300
-                  ? "⚡ Extremely fast response"
-                  : result.responseTime && result.responseTime < 1000
-                  ? "⏱ Normal response time"
-                  : "⏳ Slow response time"}
-              </p>
-            </div>
-
             {/* Uptime */}
             <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 hover:border-slate-200 transition-colors">
               <div className="flex items-center gap-2 mb-2">
@@ -337,7 +311,6 @@ export function CheckerForm() {
             {result.status === "UP" ? (
               <span>
                 <strong>{result.url.replace(/^https?:\/\/(www\.)?/, "")}</strong> is up and responsive. 
-                {result.responseTime ? ` The server responded in ${result.responseTime}ms.` : ""} 
                 {result.ssl?.status === "VALID" ? " The SSL certificate is valid and secure." : ""}
               </span>
             ) : (
@@ -356,53 +329,36 @@ export function CheckerForm() {
           Popular Websites Status
         </h3>
         
-        {loadingPopular ? (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-16 rounded-xl border border-slate-100 bg-white/50 animate-pulse"
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {POPULAR_SITES.map((site) => (
+            <button
+              key={site.domain}
+              onClick={() => selectSuggestion(site.domain)}
+              className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-blue-400 hover:shadow-md transition group text-left w-full"
+            >
+              <Image
+                src={`https://www.google.com/s2/favicons?sz=32&domain=${site.domain}`}
+                alt={site.name}
+                width={20}
+                height={20}
+                className="rounded-sm flex-shrink-0"
+                unoptimized
               />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {popularSites.map((site) => (
-              <button
-                key={site.domain}
-                onClick={() => selectSuggestion(site.domain)}
-                className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-blue-400 hover:shadow-md transition group text-left w-full"
-              >
-                <Image
-                  src={`https://www.google.com/s2/favicons?sz=32&domain=${site.domain}`}
-                  alt={site.name}
-                  width={20}
-                  height={20}
-                  className="rounded-sm flex-shrink-0"
-                  unoptimized
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-semibold text-xs text-slate-800 truncate">
-                      {site.name}
-                    </span>
-                    <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                      {site.status === "UP" && (
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      )}
-                      <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
-                        site.status === "UP" ? "bg-emerald-500" : "bg-rose-500"
-                      }`}></span>
-                    </span>
-                  </div>
-                  <p className="text-xxs text-slate-450 truncate">
-                    {site.status === "UP" ? `${site.responseTime}ms` : "Offline"}
-                  </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="font-semibold text-xs text-slate-800 truncate">
+                    {site.name}
+                  </span>
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  </span>
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
+                <p className="text-xxs text-slate-450 truncate">Online</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

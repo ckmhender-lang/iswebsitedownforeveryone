@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { MonitorWithChecks } from "@/types";
-import type { SslCheck } from "@prisma/client";
+import type { LocalSslCheck } from "@/lib/local-store";
 import { getStatusBg, getStatusColor, formatResponseTime } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -28,7 +28,7 @@ interface Props {
 export function MonitorDetail({ monitor }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(monitor.status);
-  const [ssl, setSsl] = useState<SslCheck | null>(monitor.sslCheck);
+  const [ssl, setSsl] = useState<LocalSslCheck | null>(monitor.sslCheck);
   const [sslLoading, setSslLoading] = useState(false);
 
   async function togglePause() {

@@ -2,7 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Monitor,
@@ -29,7 +28,7 @@ export function Sidebar({ user }: SidebarProps) {
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut({ redirect: false });
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   }
 

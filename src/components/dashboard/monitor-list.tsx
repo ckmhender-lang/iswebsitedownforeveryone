@@ -1,10 +1,10 @@
 import Link from "next/link";
-import type { Monitor } from "@prisma/client";
+import type { LocalMonitor } from "@/lib/local-store";
 import { getStatusBg, formatResponseTime } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
 
 interface MonitorListProps {
-  monitors: Monitor[];
+  monitors: LocalMonitor[];
 }
 
 export function MonitorList({ monitors }: MonitorListProps) {

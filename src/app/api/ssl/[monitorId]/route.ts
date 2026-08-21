@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getMonitorByIdForUser, getSslCheck, upsertSslCheck } from "@/lib/local-store";
 import { checkSsl } from "@/lib/ssl-checker";
 
 // GET — return current SSL info for a monitor
@@ -15,16 +15,13 @@ export async function GET(
 
   const { monitorId } = await params;
 
-  const monitor = await prisma.monitor.findFirst({
-    where: { id: monitorId, userId: session.user.id as string },
-    include: { sslCheck: true },
-  });
+  const monitor = getMonitorByIdForUser(monitorId, session.user.id);
 
   if (!monitor) {
     return NextResponse.json({ error: "Monitor not found" }, { status: 404 });
   }
 
-  return NextResponse.json(monitor.sslCheck ?? null);
+  return NextResponse.json(getSslCheck(monitor.id));
 }
 
 // POST — force-refresh SSL check for a monitor
@@ -39,9 +36,7 @@ export async function POST(
 
   const { monitorId } = await params;
 
-  const monitor = await prisma.monitor.findFirst({
-    where: { id: monitorId, userId: session.user.id as string },
-  });
+  const monitor = getMonitorByIdForUser(monitorId, session.user.id);
 
   if (!monitor) {
     return NextResponse.json({ error: "Monitor not found" }, { status: 404 });
@@ -49,29 +44,15 @@ export async function POST(
 
   const result = await checkSsl(monitor.url);
 
-  const sslCheck = await prisma.sslCheck.upsert({
-    where: { monitorId },
-    create: {
-      monitorId,
-      status: result.status,
-      issuer: result.issuer,
-      subject: result.subject,
-      validFrom: result.validFrom,
-      validTo: result.validTo,
-      daysUntilExpiry: result.daysUntilExpiry,
-      error: result.error,
-      lastCheckedAt: new Date(),
-    },
-    update: {
-      status: result.status,
-      issuer: result.issuer,
-      subject: result.subject,
-      validFrom: result.validFrom,
-      validTo: result.validTo,
-      daysUntilExpiry: result.daysUntilExpiry,
-      error: result.error,
-      lastCheckedAt: new Date(),
-    },
+  const sslCheck = upsertSslCheck(monitorId, {
+    status: result.status,
+    issuer: result.issuer ?? null,
+    subject: result.subject ?? null,
+    validFrom: result.validFrom ?? null,
+    validTo: result.validTo ?? null,
+    daysUntilExpiry: result.daysUntilExpiry ?? null,
+    error: result.error ?? null,
+    lastCheckedAt: new Date(),
   });
 
   return NextResponse.json(sslCheck);
